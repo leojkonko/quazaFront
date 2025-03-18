@@ -1,0 +1,57 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const email = ref('');
+const password = ref('');
+
+const handleLogin = () => {
+    // Simulate login
+    console.log('Login attempt:', { email: email.value, password: password.value });
+    router.push('/dashboard');
+};
+</script>
+<template>
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-600 to-purple-700">
+        <div class="bg-white p-10 rounded-2xl shadow-2xl w-96 transform transition-all duration-300 hover:scale-105">
+            <div class="text-center">
+                <h2
+                    class="text-4xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
+                    Bem-vindo de Volta!
+                </h2>
+                <p class="text-sm text-red-500 mb-8">Faça login para acessar sua conta.</p>
+            </div>
+            <form @submit.prevent="handleLogin" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                    <input v-model="email" type="email" required placeholder="Digite seu email"
+                        class="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder-gray-400" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                    <input v-model="password" type="password" required placeholder="Digite sua senha"
+                        class="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all placeholder-gray-400" />
+                </div>
+                <button type="submit"
+                    class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all">
+                    Entrar
+                </button>
+                <div class="text-center mt-4">
+                    <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500 transition-colors">
+                        Esqueceu sua senha?
+                    </a>
+                </div>
+                <div class="text-center mt-6">
+                    <span class="text-sm text-gray-600">Não tem uma conta? </span>
+                    <router-link to="/register" class="text-sm text-indigo-600 hover:text-indigo-500 transition-colors">
+                        Cadastre-se
+                    </router-link>
+                </div>
+            </form>
+        </div>
+    </div>
+</template>
+<style scoped>
+/* Adicione estilos personalizados aqui, se necessário */
+</style>
