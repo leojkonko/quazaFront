@@ -20,6 +20,11 @@ export function useAuth() {
     const isLoading = ref(false);
     const toast = useToast();
 
+    const isAuthenticated = () => {
+        const userData = localStorage.getItem('user_data');
+        return !!userData;
+    };
+
     const validateRegisterData = (data: RegisterData) => {
         if (!data.nomeCompleto.trim()) {
             error.value = 'Nome completo é obrigatório';
@@ -165,10 +170,10 @@ export function useAuth() {
 
             console.log('Status da resposta:', response.status);
 
-            if (!response.ok) {
-                const responseData = await response.json().catch(() => null);
-                console.error('Erro da API:', responseData);
+            const responseData = await response.json();
+            console.log('Resposta completa do login:', responseData);
 
+            if (!response.ok) {
                 switch (response.status) {
                     case 400:
                         throw new Error('Dados inválidos. Verifique as informações e tente novamente.');
@@ -181,18 +186,27 @@ export function useAuth() {
                 }
             }
 
-            const responseData = await response.json();
-            console.log('Login bem-sucedido!');
-
-            // Aqui você pode adicionar lógica para armazenar o token se a API retornar
-            if (responseData.token) {
-                localStorage.setItem('auth_token', responseData.token);
+            // Verificar se temos os dados do usuário na resposta
+            if (!responseData.id || !responseData.email) {
+                console.error('Estrutura da resposta:', responseData);
+                throw new Error('Dados do usuário não encontrados na resposta');
             }
 
-            toast.success('Login realizado com sucesso!', {
+            // Armazenar os dados do usuário
+            const userData = {
+                id: responseData.id,
+                nomeCompleto: responseData.nomeCompleto,
+                email: responseData.email
+            };
+
+            localStorage.setItem('user_data', JSON.stringify(userData));
+            console.log('Dados do usuário armazenados com sucesso');
+
+            toast.success(responseData.mensagem || 'Login realizado com sucesso!', {
                 duration: 3000,
                 position: 'top-right'
             });
+
             return true;
         } catch (err) {
             console.error('Erro durante o login:', err);
@@ -211,10 +225,61 @@ export function useAuth() {
         }
     };
 
+    const logout = async () => {
+        try {
+            isLoading.value = true;
+            error.value = '';
+
+            const apiUrl = import.meta.env.VITE_API_URL;
+            const endpoint = import.meta.env.VITE_API_LOGOUT_ENDPOINT;
+            const url = `${apiUrl}${endpoint}`;
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Erro ao realizar logout');
+            }
+
+            const data = await response.json();
+
+            // Limpar dados do usuário
+            localStorage.removeItem('user_data');
+
+            toast.success(data.mensagem || 'Logout realizado com sucesso!', {
+                duration: 3000,
+                position: 'top-right'
+            });
+
+            return true;
+        } catch (err) {
+            console.error('Erro durante o logout:', err);
+            const errorMessage = err instanceof Error
+                ? err.message
+                : 'Erro ao realizar logout. Tente novamente.';
+
+            error.value = errorMessage;
+            toast.error(errorMessage, {
+                duration: 5000,
+                position: 'top-right'
+            });
+            return false;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         error,
         isLoading,
         register,
-        login
+        login,
+        logout,
+        isAuthenticated
     };
 }

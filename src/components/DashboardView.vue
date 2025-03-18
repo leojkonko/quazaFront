@@ -1,4 +1,16 @@
 <script setup lang="ts">
+import { useRouter } from 'vue-router';
+import { useAuth } from '../composables/useAuth';
+
+const router = useRouter();
+const { logout } = useAuth();
+
+const handleLogout = async () => {
+    const success = await logout();
+    if (success) {
+        router.push('/login');
+    }
+};
 </script>
 
 <template>
@@ -6,8 +18,21 @@
         <!-- Cabeçalho -->
         <header class="bg-gradient-to-r from-indigo-600 to-purple-600 shadow-lg">
             <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                <h1 class="text-3xl font-bold text-white">Dashboard</h1>
-                <p class="mt-2 text-indigo-200">Bem-vindo de volta! Aqui está um resumo das suas atividades.</p>
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-3xl font-bold text-white">Dashboard</h1>
+                        <p class="mt-2 text-indigo-200">Bem-vindo de volta! Aqui está um resumo das suas atividades.</p>
+                    </div>
+                    <button @click="handleLogout"
+                        class="px-4 py-2 bg-white text-indigo-600 rounded-lg shadow hover:bg-indigo-50 transition-colors duration-200 flex items-center space-x-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd"
+                                d="M3 3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H3zm11 4.414l-4.293 4.293a1 1 0 0 1-1.414-1.414L11.586 7H6a1 1 0 1 1 0-2h5.586L8.293 1.707a1 1 0 0 1 1.414-1.414L14 4.586v2.828z"
+                                clip-rule="evenodd" />
+                        </svg>
+                        <span>Sair</span>
+                    </button>
+                </div>
             </div>
         </header>
 
