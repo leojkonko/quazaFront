@@ -10,6 +10,11 @@ interface RegisterData {
     confirmacaoSenha: string;
 }
 
+interface LoginData {
+    email: string;
+    senha: string;
+}
+
 export function useAuth() {
     const error = ref('');
     const isLoading = ref(false);
@@ -135,9 +140,81 @@ export function useAuth() {
         }
     };
 
+    const login = async (data: LoginData) => {
+        try {
+            isLoading.value = true;
+            error.value = '';
+
+            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+            const endpoint = import.meta.env.VITE_API_LOGIN_ENDPOINT || '/api/usuario/login';
+            const url = `${apiUrl}${endpoint}`;
+
+            console.log('Tentando login:', url);
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: data.email.toLowerCase().trim(),
+                    senha: data.senha
+                })
+            });
+
+            console.log('Status da resposta:', response.status);
+
+            if (!response.ok) {
+                const responseData = await response.json().catch(() => null);
+                console.error('Erro da API:', responseData);
+
+                switch (response.status) {
+                    case 400:
+                        throw new Error('Dados inválidos. Verifique as informações e tente novamente.');
+                    case 401:
+                        throw new Error('Email ou senha incorretos.');
+                    case 500:
+                        throw new Error('Erro no servidor. Tente novamente mais tarde.');
+                    default:
+                        throw new Error(responseData?.message || 'Erro ao realizar login');
+                }
+            }
+
+            const responseData = await response.json();
+            console.log('Login bem-sucedido!');
+
+            // Aqui você pode adicionar lógica para armazenar o token se a API retornar
+            if (responseData.token) {
+                localStorage.setItem('auth_token', responseData.token);
+            }
+
+            toast.success('Login realizado com sucesso!', {
+                duration: 3000,
+                position: 'top-right'
+            });
+            return true;
+        } catch (err) {
+            console.error('Erro durante o login:', err);
+            const errorMessage = err instanceof Error
+                ? err.message
+                : 'Erro ao conectar com o servidor. Verifique sua conexão e tente novamente.';
+
+            error.value = errorMessage;
+            toast.error(errorMessage, {
+                duration: 5000,
+                position: 'top-right'
+            });
+            return false;
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         error,
         isLoading,
-        register
+        register,
+        login
     };
 }
