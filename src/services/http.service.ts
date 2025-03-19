@@ -19,6 +19,16 @@ class HttpError extends Error {
     }
 }
 
+const getErrorMessage = (error: any): string => {
+    if (typeof error === 'string') return error;
+    if (error instanceof Error) return error.message;
+    if (error && typeof error === 'object') {
+        if ('message' in error) return String(error.message);
+        if (Array.isArray(error)) return error.map(String).join(', ');
+    }
+    return 'Ocorreu um erro inesperado';
+};
+
 export class HttpService {
     private static async fetchWithTimeout(url: string, options: FetchOptions = {}): Promise<Response> {
         const { timeout = API_CONFIG.TIMEOUT } = options;
@@ -61,7 +71,15 @@ export class HttpService {
                 }
             });
 
-            const data = await response.json();
+            let data;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // Se não for JSON, tenta ler como texto
+                data = await response.text();
+            }
+
             console.log('📦 Response:', {
                 status: response.status,
                 ok: response.ok,
@@ -69,51 +87,69 @@ export class HttpService {
             });
 
             if (!response.ok) {
-                throw new HttpError(response, data);
+                // Se a resposta for uma string direta, use-a como mensagem de erro
+                if (typeof data === 'string') {
+                    return {
+                        success: false,
+                        message: data
+                    };
+                }
+
+                // Se o servidor retornou um objeto com mensagem específica, use-a
+                if (data.message || data.mensagem || data.error) {
+                    return {
+                        success: false,
+                        message: data.message || data.mensagem || data.error,
+                        validationErrors: data.errors || null
+                    };
+                }
+
+                // Caso contrário, trate baseado no status HTTP
+                switch (response.status) {
+                    case 401:
+                        return {
+                            success: false,
+                            message: 'Email ou senha incorretos.'
+                        };
+                    case 400:
+                        return {
+                            success: false,
+                            message: 'Dados inválidos. Verifique as informações e tente novamente.',
+                            validationErrors: data.errors
+                        };
+                    case 404:
+                        return {
+                            success: false,
+                            message: 'Recurso não encontrado.'
+                        };
+                    case 409:
+                        return {
+                            success: false,
+                            message: 'Recurso já existe. Verifique os dados e tente novamente.'
+                        };
+                    case 500:
+                        return {
+                            success: false,
+                            message: 'Erro interno do servidor. Tente novamente mais tarde.'
+                        };
+                    default:
+                        return {
+                            success: false,
+                            message: 'Ocorreu um erro inesperado. Tente novamente.'
+                        };
+                }
             }
 
             return {
                 success: true,
                 data,
-                message: data.message
+                message: typeof data === 'object' ? (data.message || data.mensagem) : undefined
             };
         } catch (error) {
-            if (error instanceof HttpError) {
-                console.log('❌ Error Response:', {
-                    status: error.response.status,
-                    data: error.data
-                });
-
-                const errorResponse: ApiResponse = {
-                    success: false,
-                    message: error.data.message || error.data || 'Erro na requisição'
-                };
-
-                if (error.data.errors) {
-                    if (typeof error.data.errors === 'object' && !Array.isArray(error.data.errors)) {
-                        errorResponse.validationErrors = error.data.errors;
-                        const errorMessages = [];
-                        for (const field in error.data.errors) {
-                            errorMessages.push(...error.data.errors[field]);
-                        }
-                        errorResponse.message = errorMessages[0] || errorResponse.message;
-                    } else {
-                        errorResponse.errors = Array.isArray(error.data.errors)
-                            ? error.data.errors
-                            : [error.data.errors];
-                        if (!errorResponse.message && errorResponse.errors.length > 0) {
-                            errorResponse.message = errorResponse.errors[0];
-                        }
-                    }
-                }
-
-                return errorResponse;
-            }
-
             console.error('💥 Unexpected Error:', error);
             return {
                 success: false,
-                message: error instanceof Error ? error.message : 'Erro na requisição'
+                message: getErrorMessage(error)
             };
         }
     }

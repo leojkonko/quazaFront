@@ -29,7 +29,7 @@ const handleLogin = async () => {
                 </h2>
                 <p class="text-sm text-gray-500 mb-8">Faça login para acessar sua conta.</p>
                 <!-- Mensagem de erro -->
-                <p v-if="error" class="text-sm text-red-500 mb-4">{{ error }}</p>
+                <p v-if="authStore.error" class="text-sm text-red-500 mb-4">{{ authStore.error }}</p>
             </div>
             <form @submit.prevent="handleLogin" class="space-y-6">
                 <div>
@@ -42,9 +42,9 @@ const handleLogin = async () => {
                     <input v-model="formData.senha" type="password" required placeholder="Digite sua senha"
                         class="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-gray-700 placeholder-gray-400" />
                 </div>
-                <button type="submit" :disabled="isLoading"
+                <button type="submit" :disabled="authStore.isLoading"
                     class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                    {{ isLoading ? 'Entrando...' : 'Entrar' }}
+                    {{ authStore.isLoading ? 'Entrando...' : 'Entrar' }}
                 </button>
                 <div class="text-center mt-4">
                     <a href="#" class="text-sm text-indigo-600 hover:text-indigo-500 transition-colors">

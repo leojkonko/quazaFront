@@ -66,6 +66,13 @@ export const useAuthStore = defineStore('auth', () => {
         setValidationErrors(null);
     };
 
+    const getErrorMessage = (error: any): string => {
+        if (typeof error === 'string') return error;
+        if (error instanceof Error) return error.message;
+        if (error && typeof error === 'object' && 'message' in error) return String(error.message);
+        return 'Ocorreu um erro inesperado';
+    };
+
     // Actions
     const initializeAuth = () => {
         const userData = localStorage.getItem('user_data');
@@ -97,13 +104,18 @@ export const useAuthStore = defineStore('auth', () => {
                 toast.success(response.message || 'Login realizado com sucesso!', TOAST_CONFIG);
                 return true;
             } else {
+                // Se houver erros de validação, armazene-os
                 if (response.validationErrors) {
                     setValidationErrors(response.validationErrors);
                 }
-                throw new Error(response.message || 'Erro ao realizar login');
+                
+                // Use a mensagem específica retornada pela API
+                const errorMessage = response.message || 'Erro ao realizar login';
+                setError(errorMessage);
+                throw new Error(errorMessage);
             }
         } catch (err: any) {
-            const errorMessage = err.message || 'Erro ao realizar login';
+            const errorMessage = err instanceof Error ? err.message : getErrorMessage(err);
             setError(errorMessage);
             toast.error(errorMessage, TOAST_CONFIG);
             return false;
@@ -120,16 +132,16 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await AuthService.register(data);
 
             if (response.success) {
-                toast.success(response.message || 'Cadastro realizado com sucesso!', TOAST_CONFIG);
+                toast.success(getErrorMessage(response.message) || 'Cadastro realizado com sucesso!', TOAST_CONFIG);
                 return true;
             } else {
                 if (response.validationErrors) {
                     setValidationErrors(response.validationErrors);
                 }
-                throw new Error(response.message || 'Erro ao realizar cadastro');
+                throw new Error(getErrorMessage(response.message) || 'Erro ao realizar cadastro');
             }
         } catch (err: any) {
-            const errorMessage = err.message || 'Erro ao realizar cadastro';
+            const errorMessage = getErrorMessage(err);
             setError(errorMessage);
             toast.error(errorMessage, TOAST_CONFIG);
             return false;
@@ -147,13 +159,13 @@ export const useAuthStore = defineStore('auth', () => {
 
             if (response.success) {
                 setUser(null);
-                toast.success(response.message || 'Logout realizado com sucesso!', TOAST_CONFIG);
+                toast.success(getErrorMessage(response.message) || 'Logout realizado com sucesso!', TOAST_CONFIG);
                 return true;
             } else {
-                throw new Error(response.message || 'Erro ao realizar logout');
+                throw new Error(getErrorMessage(response.message) || 'Erro ao realizar logout');
             }
         } catch (err: any) {
-            const errorMessage = err.message || 'Erro ao realizar logout';
+            const errorMessage = getErrorMessage(err);
             setError(errorMessage);
             toast.error(errorMessage, TOAST_CONFIG);
             return false;
