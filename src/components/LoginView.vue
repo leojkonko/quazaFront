@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useAuth } from '../composables/useAuth';
+import { useAuthStore } from '../stores/auth';
 
 const router = useRouter();
-const { login, error, isLoading } = useAuth();
+const authStore = useAuthStore();
 
 const formData = ref({
     email: '',
@@ -12,7 +12,7 @@ const formData = ref({
 });
 
 const handleLogin = async () => {
-    const success = await login(formData.value);
+    const success = await authStore.login(formData.value.email, formData.value.senha);
     if (success) {
         router.push('/dashboard');
     }
